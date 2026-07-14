@@ -35,16 +35,13 @@ jobs:
       run: flutter pub get
 
     # 5. Adım: iOS bağımlılıklarını yöneten CocoaPods kütüphanelerini yüklüyoruz.
-    - name: Install CocoaPods
-      run: |
-        cd ios
-        pod install
-        cd ..
+    - name: Pre-build to generate Podfile
+      run: flutter build ios --config-only
 
     # 6. Adım: Kod imzalama (Code Signing) olmadan iOS uygulaması derliyoruz.
     # Bu komut, Apple Geliştirici sertifikası gerektirmeden .app ve derleme dosyalarını üretir.
-    - name: Build iOS Application
-      run: flutter build ios --release --no-codesign
+    - name: Pre-build to generate Podfile
+      run: flutter build ios --config-only
 
     # 7. Adım: Derlenen dosyaları indirilebilir bir ZIP paketi haline getiriyoruz.
     - name: Upload Build Artifacts

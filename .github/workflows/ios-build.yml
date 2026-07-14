@@ -1,0 +1,54 @@
+name: iOS Build
+
+# Bu işlem sadece 'main' dalına (branch) her yeni kod gönderdiğinde (push) tetiklenir.
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # Bu satır, derlemeyi GitHub arayüzünden elle de başlatabilmeni sağlar.
+
+jobs:
+  build:
+    # GitHub'ın bize ücretsiz sağladığı sanal macOS işletim sistemini kullanıyoruz.
+    runs-on: macos-latest
+
+    steps:
+    # 1. Adım: GitHub deposundaki kodlarımızı sanal makineye çekiyoruz.
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # 2. Adım: Java ortamını kuruyoruz (Android uyumluluğu ve genel araçlar için faydalıdır).
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # 3. Adım: Flutter SDK'sını sanal Mac bilgisayara kuruyoruz.
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+        # Bilgisayarındaki yerel Flutter sürümünle uyumlu olması için 'stable' (en güncel kararlı) sürümü seçtik.
+
+    # 4. Adım: Flutter bağımlılıklarını (kütüphaneleri) çekiyoruz.
+    - name: Install Dependencies
+      run: flutter pub get
+
+    # 5. Adım: iOS bağımlılıklarını yöneten CocoaPods kütüphanelerini yüklüyoruz.
+    - name: Install CocoaPods
+      run: |
+        cd ios
+        pod install
+        cd ..
+
+    # 6. Adım: Kod imzalama (Code Signing) olmadan iOS uygulaması derliyoruz.
+    # Bu komut, Apple Geliştirici sertifikası gerektirmeden .app ve derleme dosyalarını üretir.
+    - name: Build iOS Application
+      run: flutter build ios --release --no-codesign
+
+    # 7. Adım: Derlenen dosyaları indirilebilir bir ZIP paketi haline getiriyoruz.
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: iOS-Release-Build
+        path: build/ios/iphoneos
